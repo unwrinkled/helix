@@ -212,6 +212,9 @@ impl Application {
                         let doc = doc_mut!(editor, &doc_id);
                         let pos = Selection::point(pos_at_coords(doc.text().slice(..), pos, true));
                         doc.set_selection(view_id, pos);
+                        if args.readonly {
+                            doc.set_readonly();
+                        }
                     }
                 }
 

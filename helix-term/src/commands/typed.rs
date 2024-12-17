@@ -339,6 +339,10 @@ fn write_impl(
     let (view, doc) = current!(cx.editor);
     let path = path.map(AsRef::as_ref);
 
+    if doc.readonly {
+        anyhow::bail!("can't save buffer, document is read-only")
+    }
+
     if config.insert_final_newline {
         insert_final_newline(doc, view.id);
     }

@@ -192,6 +192,7 @@ pub struct Document {
     pub focused_at: std::time::Instant,
 
     pub readonly: bool,
+    readonly_requested: bool,
 }
 
 /// Inlay hints for a single `(Document, View)` combo.
@@ -683,6 +684,7 @@ impl Document {
             version_control_head: None,
             focused_at: std::time::Instant::now(),
             readonly: false,
+            readonly_requested: false,
             jump_labels: HashMap::new(),
         }
     }
@@ -1100,11 +1102,20 @@ impl Document {
 
     // Detect if the file is readonly and change the readonly field if necessary (unix only)
     pub fn detect_readonly(&mut self) {
+        if self.readonly_requested {
+            return;
+        }
+
         // Allows setting the flag for files the user cannot modify, like root files
         self.readonly = match &self.path {
             None => false,
             Some(p) => readonly(p),
         };
+    }
+
+    pub fn set_readonly(&mut self) {
+        self.readonly = true;
+        self.readonly_requested = true;
     }
 
     /// Reload the document from its path.
@@ -1123,7 +1134,9 @@ impl Document {
         };
 
         // Once we have a valid path we check if its readonly status has changed
-        self.detect_readonly();
+        if !self.readonly_requested {
+            self.detect_readonly();
+        }
 
         let mut file = std::fs::File::open(&path)?;
         let (rope, ..) = from_reader(&mut file, Some(encoding))?;
